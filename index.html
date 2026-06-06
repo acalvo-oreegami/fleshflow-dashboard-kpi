@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FreshFlow — Dashboard Pilotage</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.min.js"></script>
+
+  <style>
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* CSS VARIABLES & RESET */
+    /* ─────────────────────────────────────────────────────────────────── */
+    :root {
+      --bg-primary: #0a0f0d;
+      --bg-card: #111a14;
+      --bg-card-hover: #162019;
+      --border: #1e3024;
+      --border-accent: #2d4a36;
+      --green: #4ade80;
+      --green-dim: #1a4a2a;
+      --amber: #fbbf24;
+      --amber-dim: #3d2e08;
+      --red: #f87171;
+      --red-dim: #3d1414;
+      --text-primary: #e8f0ea;
+      --text-secondary: #7a9882;
+      --text-muted: #4a6454;
+      --font-mono: 'DM Mono', monospace;
+      --font-sans: 'Instrument Sans', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* HEADER */
+    /* ─────────────────────────────────────────────────────────────────── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+      background-color: rgba(10, 15, 13, 0.8);
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.2rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 2rem;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .logo {
+      font-family: var(--font-mono);
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .header-meta {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .status-badges {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      padding: 0.3rem 0.7rem;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border: 1px solid;
+    }
+
+    .badge-vert {
+      background: var(--green-dim);
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .badge-orange {
+      background: var(--amber-dim);
+      color: var(--amber);
+      border-color: var(--amber);
+    }
+
+    .badge-rouge {
+      background: var(--red-dim);
+      color: var(--red);
+      border-color: var(--red);
+      animation: pulse-badge 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-badge {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .header-right {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .theme-toggle {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.5rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* MAIN LAYOUT */
+    /* ─────────────────────────────────────────────────────────────────── */
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    section {
+      margin-bottom: 3rem;
+    }
+
+    section > h2 {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.8rem;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* HERO SECTION */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .hero-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-accent);
+      border-radius: 6px;
+      padding: 1.8rem;
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hero-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 0.8rem;
+    }
+
+    .hero-value {
+      font-family: var(--font-mono);
+      font-size: 2.5rem;
+      font-weight: 600;
+      color: var(--green);
+      line-height: 1.1;
+    }
+
+    .hero-sub {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* KPI GRID */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      animation: slideIn 0.5s ease-out backwards;
+      position: relative;
+    }
+
+    .kpi-card:nth-child(1) { animation-delay: 0ms; }
+    .kpi-card:nth-child(2) { animation-delay: 80ms; }
+    .kpi-card:nth-child(3) { animation-delay: 160ms; }
+    .kpi-card:nth-child(4) { animation-delay: 240ms; }
+    .kpi-card:nth-child(5) { animation-delay: 320ms; }
+    .kpi-card:nth-child(6) { animation-delay: 400ms; }
+    .kpi-card:nth-child(7) { animation-delay: 480ms; }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .kpi-card:hover {
+      border-color: var(--green);
+      background: var(--bg-card-hover);
+      transform: translateY(-4px);
+    }
+
+    .kpi-card.rouge {
+      animation: pulse-card 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-card {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.1); }
+      50% { box-shadow: 0 0 0 8px rgba(248, 113, 113, 0); }
+    }
+
+    .kpi-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 1rem;
+    }
+
+    .kpi-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .kpi-cat {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .kpi-badge {
+      padding: 0.25rem 0.6rem;
+      border-radius: 2px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid;
+    }
+
+    .kpi-badge.vert {
+      background: var(--green-dim);
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .kpi-badge.orange {
+      background: var(--amber-dim);
+      color: var(--amber);
+      border-color: var(--amber);
+    }
+
+    .kpi-badge.rouge {
+      background: var(--red-dim);
+      color: var(--red);
+      border-color: var(--red);
+    }
+
+    .kpi-value {
+      font-family: var(--font-mono);
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--green);
+      margin-bottom: 0.5rem;
+    }
+
+    .kpi-sub {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+
+    .kpi-bar {
+      background: var(--border);
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 0.8rem;
+    }
+
+    .kpi-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      animation: fillBar 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      transition: background-color 0.3s ease;
+    }
+
+    .kpi-bar-fill.vert { background: var(--green); }
+    .kpi-bar-fill.orange { background: var(--amber); }
+    .kpi-bar-fill.rouge { background: var(--red); }
+
+    @keyframes fillBar {
+      from { width: 0%; }
+      to { width: var(--fill-percent); }
+    }
+
+    .kpi-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .kpi-trend {
+      font-size: 1.2rem;
+    }
+
+    .kpi-note {
+      display: none;
+      position: absolute;
+      bottom: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-card);
+      border: 1px solid var(--green);
+      border-radius: 4px;
+      padding: 0.8rem;
+      font-size: 0.8rem;
+      width: 200px;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      white-space: normal;
+    }
+
+    .kpi-card:hover .kpi-note {
+      display: block;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* CHARTS */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .chart-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.5rem;
+      position: relative;
+      height: 350px;
+    }
+
+    .chart-title {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    canvas {
+      max-height: 280px;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* TIMELINE */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .timeline {
+      position: relative;
+      padding: 2rem 0;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(to bottom, var(--green), var(--amber), var(--red));
+    }
+
+    .timeline-items {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      animation: slideIn 0.5s ease-out backwards;
+    }
+
+    .timeline-item:nth-child(1) { animation-delay: 0ms; }
+    .timeline-item:nth-child(2) { animation-delay: 100ms; }
+    .timeline-item:nth-child(3) { animation-delay: 200ms; }
+
+    .timeline-item:nth-child(odd) {
+      flex-direction: row-reverse;
+    }
+
+    .timeline-content {
+      width: 50%;
+      background: var(--bg-card);
+      border: 2px solid var(--border-accent);
+      border-radius: 6px;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .timeline-item:nth-child(odd) .timeline-content {
+      border-left: 3px solid var(--green);
+    }
+
+    .timeline-item:nth-child(even) .timeline-content {
+      border-right: 3px solid var(--amber);
+    }
+
+    .timeline-dot {
+      width: 16px;
+      height: 16px;
+      background: var(--green);
+      border: 3px solid var(--bg-primary);
+      border-radius: 50%;
+      position: absolute;
+      left: 50%;
+      top: 2rem;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+
+    .timeline-item:nth-child(even) .timeline-dot {
+      background: var(--amber);
+    }
+
+    .timeline-date {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .timeline-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .timeline-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 768px) {
+      .timeline::before {
+        left: 8px;
+      }
+
+      .timeline-item {
+        flex-direction: column !important;
+        gap: 1rem;
+      }
+
+      .timeline-content {
+        width: 100%;
+        margin-left: 2rem;
+      }
+
+      .timeline-dot {
+        left: 0;
+        top: 1.5rem;
+      }
+
+      .timeline-item:nth-child(odd) .timeline-content,
+      .timeline-item:nth-child(even) .timeline-content {
+        border-left: 3px solid var(--green);
+        border-right: none;
+      }
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* PREDICTIONS */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .predictions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .prediction-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-accent);
+      border-radius: 6px;
+      padding: 1.5rem;
+      animation: slideIn 0.5s ease-out backwards;
+    }
+
+    .prediction-card:nth-child(1) { animation-delay: 600ms; }
+    .prediction-card:nth-child(2) { animation-delay: 680ms; }
+    .prediction-card:nth-child(3) { animation-delay: 760ms; }
+
+    .prediction-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 0.8rem;
+    }
+
+    .prediction-value {
+      font-family: var(--font-mono);
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--amber);
+      margin-bottom: 0.5rem;
+    }
+
+    .prediction-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* TABLEAU KPIs */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .table-controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-filter {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.6rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .btn-filter:hover {
+      border-color: var(--text-primary);
+    }
+
+    .btn-filter.active {
+      background: var(--green);
+      border-color: var(--green);
+      color: var(--bg-primary);
+    }
+
+    .btn-filter.active.orange {
+      background: var(--amber);
+      border-color: var(--amber);
+    }
+
+    .btn-filter.active.rouge {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    .kpi-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .kpi-table thead {
+      background: var(--bg-card-hover);
+      border-bottom: 2px solid var(--border-accent);
+    }
+
+    .kpi-table th {
+      padding: 1rem;
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .kpi-table td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .kpi-table tbody tr {
+      transition: background-color 0.3s ease, opacity 0.3s ease;
+    }
+
+    .kpi-table tbody tr:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .kpi-table tbody tr.hidden {
+      display: none;
+    }
+
+    .table-nom {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .table-val {
+      font-family: var(--font-mono);
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .table-status {
+      display: inline-block;
+      padding: 0.3rem 0.6rem;
+      border-radius: 2px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      border: 1px solid;
+    }
+
+    .table-status.vert {
+      background: var(--green-dim);
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .table-status.orange {
+      background: var(--amber-dim);
+      color: var(--amber);
+      border-color: var(--amber);
+    }
+
+    .table-status.rouge {
+      background: var(--red-dim);
+      color: var(--red);
+      border-color: var(--red);
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* ALERTES */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .alerts-section {
+      background: var(--red-dim);
+      border: 2px solid var(--red);
+      border-radius: 6px;
+      padding: 1.5rem;
+      animation: blink 1s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 49%, 100% {
+        border-color: var(--red);
+        box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.3);
+      }
+      50%, 99% {
+        border-color: #ff9999;
+        box-shadow: 0 0 20px 0 rgba(248, 113, 113, 0.5);
+      }
+    }
+
+    .alert-title {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--red);
+      margin-bottom: 0.5rem;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .alert-message {
+      font-size: 1.1rem;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+
+    .alert-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-alert {
+      background: var(--red);
+      border: none;
+      color: var(--bg-primary);
+      padding: 0.8rem 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-alert:hover {
+      background: #ff9999;
+      transform: translateY(-2px);
+    }
+
+    .btn-alert.success {
+      background: var(--green);
+      color: var(--bg-primary);
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* DONUT CHART */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .donut-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.5rem;
+      height: 350px;
+      position: relative;
+    }
+
+    .donut-title {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* MODAL */
+    /* ─────────────────────────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-accent);
+      border-radius: 6px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes modalPop {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .modal-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-label {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-input {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.8rem;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--green);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .btn-modal {
+      flex: 1;
+      padding: 0.8rem;
+      border-radius: 4px;
+      border: 1px solid;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-modal.save {
+      background: var(--green);
+      color: var(--bg-primary);
+      border-color: var(--green);
+    }
+
+    .btn-modal.save:hover {
+      background: #5dd582;
+    }
+
+    .btn-modal.cancel {
+      background: transparent;
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+
+    .btn-modal.cancel:hover {
+      border-color: var(--text-primary);
+    }
+
+    .saved-indicator {
+      color: var(--green);
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+      margin-top: 0.5rem;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* FOOTER */
+    /* ─────────────────────────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* RESPONSIVE */
+    /* ─────────────────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .header-left {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      main {
+        padding: 1rem;
+      }
+
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-value {
+        font-size: 2rem;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .kpi-table {
+        font-size: 0.85rem;
+      }
+
+      .kpi-table th,
+      .kpi-table td {
+        padding: 0.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- HEADER -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <header>
+    <div class="header-content">
+      <div class="header-left">
+        <div class="logo">⚡ FreshFlow</div>
+        <div class="header-meta">
+          J+45 — 9 déc. 2025
+        </div>
+      </div>
+
+      <div class="status-badges">
+        <span class="badge badge-rouge">1 Bloquant</span>
+        <span class="badge badge-orange">2 Orange</span>
+        <span class="badge badge-vert">4 Vert</span>
+      </div>
+
+      <div class="header-right">
+        <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- MAIN -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <main>
+    <!-- HERO -->
+    <section id="hero">
+      <h2>Métriques Clés</h2>
+      <div class="hero-grid">
+        <div class="hero-card">
+          <div class="hero-label">Budget Restant</div>
+          <div class="hero-value"><span class="counter" data-target="11720">0</span> €</div>
+          <div class="hero-sub">22% consommé de 15 000€</div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-label">Avancement</div>
+          <div class="hero-value"><span class="counter" data-target="45">0</span> %</div>
+          <div class="hero-sub">45/113 jours écoulés</div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-label">KPIs Vert</div>
+          <div class="hero-value"><span class="counter" data-target="2">0</span> / 7</div>
+          <div class="hero-sub">2 au vert, 2 orange, 3 rouge</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPI GRID -->
+    <section id="kpis">
+      <h2>KPIs Pilotage</h2>
+      <div class="kpi-grid" id="kpiGrid"></div>
+    </section>
+
+    <!-- CHARTS -->
+    <section id="charts">
+      <h2>Visualisations</h2>
+      <div class="charts-grid">
+        <div class="chart-container">
+          <div class="chart-title">Avancement par Sprint</div>
+          <canvas id="chartSprints"></canvas>
+        </div>
+        <div class="donut-container">
+          <div class="donut-title">Répartition Statuts KPIs</div>
+          <canvas id="chartDonut"></canvas>
+        </div>
+        <div class="chart-container">
+          <div class="chart-title">Budget par Poste</div>
+          <canvas id="chartBudget"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- TIMELINE -->
+    <section id="timeline">
+      <h2>Jalons Critiques</h2>
+      <div class="timeline">
+        <div class="timeline-items">
+          <div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-dot"></div>
+              <div class="timeline-date">J+75</div>
+              <div class="timeline-title">Interface Gérant Déployée</div>
+              <div class="timeline-desc">Dashboard Softr opérationnel pour Léa (gérante pilote Grenoble). Formation et support.</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-dot"></div>
+              <div class="timeline-date">J+90</div>
+              <div class="timeline-title">Interface Producteurs Go-Live</div>
+              <div class="timeline-desc">App mobile WeWeb/FlutterFlow en production. Synchronisation commandes activée.</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-dot"></div>
+              <div class="timeline-date">J+113 🎯 CRITIQUE</div>
+              <div class="timeline-title">Pilote Complet Grenoble</div>
+              <div class="timeline-desc">Solution complète déployée, utilisateurs formés. Mesure KPIs intermédiaires (gain temps, précision IA, adoption).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PREDICTIONS -->
+    <section id="predictions">
+      <h2>Si on Continue au Rythme Actuel...</h2>
+      <div class="predictions-grid" id="predictionsGrid"></div>
+    </section>
+
+    <!-- TABLEAU KPIs -->
+    <section id="tableau">
+      <h2>Tableau KPIs (Filtrable)</h2>
+      <div class="table-controls">
+        <button class="btn-filter active" onclick="filterTable('tous')">Tous</button>
+        <button class="btn-filter" onclick="filterTable('vert')">🟢 Vert</button>
+        <button class="btn-filter orange" onclick="filterTable('orange')">🟠 Orange</button>
+        <button class="btn-filter rouge" onclick="filterTable('rouge')">🔴 Rouge</button>
+      </div>
+      <table class="kpi-table">
+        <thead>
+          <tr>
+            <th>KPI</th>
+            <th>Catégorie</th>
+            <th>Valeur</th>
+            <th>Cible</th>
+            <th>Statut</th>
+            <th>Maj</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </section>
+
+    <!-- ALERTES -->
+    <section id="alertes" class="alerts-section">
+      <div class="alert-title">🚨 Alerte Critique</div>
+      <div class="alert-message">
+        <strong>Offline WeWeb Non Résolu</strong> — Mode offline WeWeb bloquant pour déploiement J+75. Décision FlutterFlow requise avant 13 décembre.
+      </div>
+      <div class="alert-actions">
+        <button class="btn-alert" onclick="copySlackAlert()">
+          <span id="copyText">📋 Copier Message Slack</span>
+        </button>
+        <button class="btn-alert" onclick="exportReport()">📄 Exporter Rapport</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- MODAL -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title" id="modalTitle">Éditer KPI</div>
+      <div class="modal-form">
+        <div class="form-group">
+          <label class="form-label">Nouvelle Valeur</label>
+          <input type="number" class="form-input" id="inputValue" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-input" id="inputNotes" style="resize: vertical; min-height: 80px;"></textarea>
+        </div>
+        <div class="saved-indicator" id="savedIndicator" style="display: none;">✓ Sauvegardé en localStorage</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal save" onclick="saveKPI()">Enregistrer</button>
+        <button class="btn-modal cancel" onclick="closeModal()">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- FOOTER -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <footer>
+    FreshFlow Dashboard — GreenBasket · Formation Oreegami Bloc 2 · Dashboard Pilotage Projet
+  </footer>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- SCRIPT -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <script>
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* DATA */
+    /* ─────────────────────────────────────────────────────────────────── */
+    const KPI_DATA_DEFAULT = [
+      {
+        id: 1,
+        nom: "Avancement Technique",
+        cat: "Avancement",
+        valeur: 45,
+        cible: 100,
+        unite: "%",
+        statut: "orange",
+        tendance: "up",
+        maj: "09/12/2025",
+        notes: "15/20 workflows Make.com. Retard 2-3 sem. sync producteurs. Déploiement en 2 phases décidé."
+      },
+      {
+        id: 2,
+        nom: "Budget Consommé",
+        cat: "Budget",
+        valeur: 3280,
+        cible: 15000,
+        unite: "€",
+        statut: "vert",
+        tendance: "stable",
+        maj: "09/12/2025",
+        notes: "22% consommé à 40% du temps. Alerte si extension 3 magasins (+1200€ API)."
+      },
+      {
+        id: 3,
+        nom: "Précision IA",
+        cat: "Qualité",
+        valeur: 70,
+        cible: 70,
+        unite: "%",
+        statut: "vert",
+        tendance: "up",
+        maj: "09/12/2025",
+        notes: "14/20 prédictions exactes sur données nov. Cible atteinte dès J+45."
+      },
+      {
+        id: 4,
+        nom: "Gaspillage Léa",
+        cat: "Impact",
+        valeur: 11.2,
+        cible: 7,
+        unite: "%",
+        statut: "orange",
+        tendance: "up",
+        maj: "09/12/2025",
+        notes: "Réduit de 0.8pt sans outil. Mesure impact gaspillage reportée à J+150."
+      },
+      {
+        id: 5,
+        nom: "Workflows Make.com",
+        cat: "Avancement",
+        valeur: 15,
+        cible: 20,
+        unite: "/20",
+        statut: "orange",
+        tendance: "up",
+        maj: "09/12/2025",
+        notes: "5 workflows complexes restants (sync commandes). +2-3 semaines estimées."
+      },
+      {
+        id: 6,
+        nom: "Engagement Léa",
+        cat: "Adoption",
+        valeur: 60,
+        cible: 90,
+        unite: "%",
+        statut: "orange",
+        tendance: "up",
+        maj: "09/12/2025",
+        notes: "Rassurée après démo IA (70% précision). Risque résistance partiellement levé."
+      },
+      {
+        id: 7,
+        nom: "Offline WeWeb",
+        cat: "Risque",
+        valeur: 0,
+        cible: 1,
+        unite: "",
+        statut: "rouge",
+        tendance: "stable",
+        maj: "09/12/2025",
+        notes: "BLOQUANT. Décision FlutterFlow nécessaire avant 13/12. Marc au support WeWeb."
+      }
+    ];
+
+    const SPRINT_DATA = {
+      labels: ["S1", "S2", "S3 (actuel)", "S4", "S5", "S6"],
+      realise: [15, 30, 45, null, null, null],
+      objectif: [15, 30, 48, 65, 85, 100]
+    };
+
+    const BUDGET_DATA = {
+      labels: ["Consulting", "Développement", "Infra & outils", "API Claude", "Formation"],
+      consomme: [8000, 1200, 1300, 780, 0],
+      restant: [0, 2300, 700, 720, 1500]
+    };
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* STATE & LOCALSTORAGE */
+    /* ─────────────────────────────────────────────────────────────────── */
+    let kpiData = loadFromLocalStorage() || [...KPI_DATA_DEFAULT];
+    let currentEditKPI = null;
+
+    function loadFromLocalStorage() {
+      const stored = localStorage.getItem('freshflow_kpi_data');
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (e) {
+          console.warn('Failed to parse localStorage:', e);
+          return null;
+        }
+      }
+      return null;
+    }
+
+    function saveToLocalStorage() {
+      localStorage.setItem('freshflow_kpi_data', JSON.stringify(kpiData));
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* INIT */
+    /* ─────────────────────────────────────────────────────────────────── */
+    window.addEventListener("DOMContentLoaded", () => {
+      renderKPIGrid();
+      renderTable();
+      renderPredictions();
+      animateCounters();
+      renderCharts();
+    });
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* RENDER KPI GRID */
+    /* ─────────────────────────────────────────────────────────────────── */
+    function renderKPIGrid() {
+      const grid = document.getElementById("kpiGrid");
+      grid.innerHTML = "";
+
+      kpiData.forEach((kpi, idx) => {
+        const percent = Math.min((kpi.valeur / kpi.cible) * 100, 100);
+        const card = document.createElement("div");
+        card.className = `kpi-card ${kpi.statut}`;
+        card.onclick = () => openModal(kpi);
+
+        card.innerHTML = `
+          <div class="kpi-header">
+            <div>
+              <div class="kpi-cat">${kpi.cat}</div>
+              <div class="kpi-title">${kpi.nom}</div>
+            </div>
+            <span class="kpi-badge ${kpi.statut}">● ${kpi.statut}</span>
+          </div>
+          <div class="kpi-value">${kpi.valeur}${kpi.unite}</div>
+          <div class="kpi-sub">Cible : ${kpi.cible}${kpi.unite}</div>
+          <div class="kpi-bar">
+            <div class="kpi-bar-fill ${kpi.statut}" style="--fill-percent: ${percent}%;"></div>
+          </div>
+          <div class="kpi-footer">
+            <span>${Math.round(percent)}% atteint</span>
+            <span class="kpi-trend">${kpi.tendance === "up" ? "↗" : kpi.tendance === "down" ? "↘" : "→"}</span>
+          </div>
+          <div class="kpi-note">${kpi.notes}</div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* RENDER TABLE */
+    /* ─────────────────────────────────────────────────────────────────── */
+    function renderTable() {
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = "";
+
+      kpiData.forEach((kpi) => {
+        const row = document.createElement("tr");
+        row.className = `kpi-row-${kpi.statut}`;
+        row.dataset.status = kpi.statut;
+
+        row.innerHTML = `
+          <td class="table-nom">${kpi.nom}</td>
+          <td>${kpi.cat}</td>
+          <td class="table-val">${kpi.valeur}${kpi.unite}</td>
+          <td class="table-val">${kpi.cible}${kpi.unite}</td>
+          <td><span class="table-status ${kpi.statut}">● ${kpi.statut}</span></td>
+          <td>${kpi.maj}</td>
+        `;
+
+        tbody.appendChild(row);
+      });
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* RENDER PREDICTIONS */
+    /* ─────────────────────────────────────────────────────────────────── */
+    function renderPredictions() {
+      const grid = document.getElementById("predictionsGrid");
+      grid.innerHTML = "";
+
+      const rythmeJour = 45 / 45;
+      const joursTotal = 113;
+      const joursRestants = joursTotal - 45;
+
+      const predictions = [
+        {
+          label: "Fin Avancement Technique",
+          value: `J+${Math.round(45 + (joursRestants * (100 - 45) / 45))}`,
+          desc: "Au rythme de 1% par jour, avancement 100% atteint vers J+145 (dépassement de 32j)."
+        },
+        {
+          label: "Budget Final Estimé",
+          value: "€ 9 746",
+          desc: "Burn rate 73€/jour. Projection finale sans dépassement API (scénario 1 magasin)."
+        },
+        {
+          label: "Date Go/No-Go WeWeb",
+          value: "13 décembre",
+          desc: "Deadline critique pour décision FlutterFlow. 4 jours restants pour validation."
+        }
+      ];
+
+      predictions.forEach((pred) => {
+        const card = document.createElement("div");
+        card.className = "prediction-card";
+        card.innerHTML = `
+          <div class="prediction-label">${pred.label}</div>
+          <div class="prediction-value">${pred.value}</div>
+          <div class="prediction-desc">${pred.desc}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* ANIMATE COUNTERS */
+    /* ─────────────────────────────────────────────────────────────────── */
+    function animateCounters() {
+      const counters = document.querySelectorAll(".counter");
+      counters.forEach((el) => {
+        const target = parseInt(el.dataset.target);
+        let current = 0;
+        const duration = 1200;
+        const increment = target / (duration / 16);
+
+        const timer = setInterval(() => {
+          current += increment;
+          if (current >= target) {
+            current = target;
+            clearInterval(timer);
+          }
+          el.textContent = Math.floor(current).toLocaleString();
+        }, 16);
+      });
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* RENDER CHARTS */
+    /* ─────────────────────────────────────────────────────────────────── */
+    let chartSprints, chartDonut, chartBudget;
+
+    function renderCharts() {
+      // Sprint Chart
+      const ctxSprints = document.getElementById("chartSprints").getContext("2d");
+      chartSprints = new Chart(ctxSprints, {
+        type: "line",
+        data: {
+          labels: SPRINT_DATA.labels,
+          datasets: [
+            {
+              label: "Réalisé",
+              data: SPRINT_DATA.realise,
+              borderColor: "#4ade80",
+              backgroundColor: "rgba(74, 222, 128, 0.1)",
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true,
+              pointRadius: 5,
+              pointBackgroundColor: "#4ade80"
+            },
+            {
+              label: "Objectif",
+              data: SPRINT_DATA.objectif,
+              borderColor: "#fbbf24",
+              borderDash: [5, 5],
+              borderWidth: 2,
+              fill: false,
+              pointRadius: 4,
+              pointBackgroundColor: "#fbbf24"
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: "#7a9882",
+                font: { family: "'DM Mono', monospace", size: 12 }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 110,
+              grid: { color: "rgba(30, 48, 36, 0.5)" },
+              ticks: { color: "#7a9882" }
+            },
+            x: {
+              grid: { color: "rgba(30, 48, 36, 0.5)" },
+              ticks: { color: "#7a9882" }
+            }
+          }
+        }
+      });
+
+      // Donut Chart (KPI Status Distribution)
+      const vertCount = kpiData.filter(k => k.statut === 'vert').length;
+      const orangeCount = kpiData.filter(k => k.statut === 'orange').length;
+      const rougeCount = kpiData.filter(k => k.statut === 'rouge').length;
+
+      const ctxDonut = document.getElementById("chartDonut").getContext("2d");
+      chartDonut = new Chart(ctxDonut, {
+        type: "doughnut",
+        data: {
+          labels: ["Vert", "Orange", "Rouge"],
+          datasets: [
+            {
+              data: [vertCount, orangeCount, rougeCount],
+              backgroundColor: ["#4ade80", "#fbbf24", "#f87171"],
+              borderColor: "#0a0f0d",
+              borderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: "#7a9882",
+                font: { family: "'DM Mono', monospace", size: 12 }
+              }
+            }
+          }
+        }
+      });
+
+      // Budget Chart
+      const ctxBudget = document.getElementById("chartBudget").getContext("2d");
+      chartBudget = new Chart(ctxBudget, {
+        type: "bar",
+        data: {
+          labels: BUDGET_DATA.labels,
+          datasets: [
+            {
+              label: "Consommé",
+              data: BUDGET_DATA.consomme,
+              backgroundColor: "#4ade80"
+            },
+            {
+              label: "Restant",
+              data: BUDGET_DATA.restant,
+              backgroundColor: "#1e3024"
+            }
+          ]
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: "#7a9882",
+                font: { family: "'DM Mono', monospace", size: 12 }
+              }
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              grid: { color: "rgba(30, 48, 36, 0.5)" },
+              ticks: { color: "#7a9882" }
+            },
+            y: {
+              stacked: true,
+              grid: { color: "rgba(30, 48, 36, 0.5)" },
+              ticks: { color: "#7a9882" }
+            }
+          }
+        }
+      });
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* FILTER TABLE */
+    /* ─────────────────────────────────────────────────────────────────── */
+    function filterTable(status) {
+      const rows = document.querySelectorAll(".kpi-table tbody tr");
+      rows.forEach((row) => {
+        if (status === "tous" || row.dataset.status === status) {
+          row.classList.remove("hidden");
+        } else {
+          row.classList.add("hidden");
+        }
+      });
+
+      document.querySelectorAll(".btn-filter").forEach((btn) => {
+        btn.classList.remove("active");
+      });
+      event.target.classList.add("active");
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* MODAL */
+    /* ─────────────────────────────────────────────────────────────────── */
+    function openModal(kpi) {
+      currentEditKPI = kpi;
+      document.getElementById("modalTitle").textContent = `Éditer : ${kpi.nom}`;
+      document.getElementById("inputValue").value = kpi.valeur;
+      document.getElementById("inputNotes").value = kpi.notes;
+      document.getElementById("savedIndicator").style.display = "none";
+      document.getElementById("modalOverlay").classList.add("active");
+    }
+
+    function closeModal(event) {
+      if (event && event.target !== document.getElementById("modalOverlay")) return;
+      document.getElementById("modalOverlay").classList.remove("active");
+    }
+
+    function saveKPI() {
+      if (!currentEditKPI) return;
+
+      const newValue = parseFloat(document.getElementById("inputValue").value);
+      const newNotes = document.getElementById("inputNotes").value;
+
+      if (isNaN(newValue)) {
+        alert("Valeur invalide");
+        return;
+      }
+
+      const kpiIndex = kpiData.findIndex((k) => k.id === currentEditKPI.id);
+      kpiData[kpiIndex].valeur = newValue;
+      kpiData[kpiIndex].notes = newNotes;
+
+      // Recalculate status
+      const percent = (newValue / kpiData[kpiIndex].cible) * 100;
+      if (percent >= 100) {
+        kpiData[kpiIndex].statut = "vert";
+      } else if (percent >= 60) {
+        kpiData[kpiIndex].statut = "orange";
+      } else {
+        kpiData[kpiIndex].statut = "rouge";
+      }
+
+      // Save to localStorage
+      saveToLocalStorage();
+
+      // Show saved indicator
+      document.getElementById("savedIndicator").style.display = "block";
+      setTimeout(() => {
+        document.getElementById("savedIndicator").style.display = "none";
+        renderKPIGrid();
+        renderTable();
+        renderPredictions();
+        renderCharts();
+        closeModal();
+      }, 1500);
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* COPY SLACK */
+    /* ─────────────────────────────────────────────────────────────────── */
+    function copySlackAlert() {
+      const message = `
+🚨 *ALERTE CRITIQUE FreshFlow - J+45*
+
+*Offline WeWeb Non Résolu*
+Mode offline WeWeb bloquant pour déploiement J+75.
+Décision FlutterFlow requise avant *13 décembre 2025*.
+
+*Responsable* : Marc (Lead Dev)
+*Action* : Forcer réponse support WeWeb. Plan B FlutterFlow = 2 sem de dev.
+
+📊 Dashboard : https://freshflow-dashboard.com
+      `.trim();
+
+      navigator.clipboard.writeText(message).then(() => {
+        const btn = event.target;
+        const original = btn.innerHTML;
+        btn.innerHTML = "✓ Copié !";
+        btn.classList.add("success");
+        setTimeout(() => {
+          btn.innerHTML = original;
+          btn.classList.remove("success");
+        }, 2000);
+      });
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* EXPORT REPORT */
+    /* ─────────────────────────────────────────────────────────────────── */
+    function exportReport() {
+      const report = `
+═══════════════════════════════════════════════════════════════
+FreshFlow — RAPPORT PILOTAGE J+45
+═══════════════════════════════════════════════════════════════
+
+Date : 9 décembre 2025
+Projet : FreshFlow — GreenBasket
+Chef Projet : Thomas
+
+─────────────────────────────────────────────────────────────────
+MÉTRIQUES CLÉS
+─────────────────────────────────────────────────────────────────
+Budget Restant  : 11 720 € (78% marge)
+Avancement      : 45% (45/113 jours)
+KPIs Vert       : 2/7 (Précision IA, Budget consommé)
+Seuil Critique  : Mode offline WeWeb
+
+─────────────────────────────────────────────────────────────────
+DÉTAIL KPIs
+─────────────────────────────────────────────────────────────────
+${kpiData
+        .map(
+          (k) => `
+${k.nom} (${k.cat})
+  Valeur    : ${k.valeur} ${k.unite}
+  Cible     : ${k.cible} ${k.unite}
+  Statut    : ${k.statut.toUpperCase()}
+  Notes     : ${k.notes}
+`
+        )
+        .join("")}
+
+─────────────────────────────────────────────────────────────────
+PRÉDICTIONS
+─────────────────────────────────────────────────────────────────
+Au rythme actuel:
+• Fin avancement technique : J+145 (32j de dépassement)
+• Budget final estimé : 9 746€ (scénario 1 magasin)
+• Go/No-Go WeWeb : 13 décembre (4j restants)
+
+─────────────────────────────────────────────────────────────────
+Généré automatiquement par FreshFlow Dashboard
+═══════════════════════════════════════════════════════════════
+      `.trim();
+
+      const blob = new Blob([report], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "FreshFlow_Rapport_J45.txt";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    /* ─────────────────────────────────────────────────────────────────── */
+    /* THEME TOGGLE */
+    /* ─────────────────────────────────────────────────────────────────── */
+    function toggleTheme() {
+      const isDark = document.documentElement.style.colorScheme === "dark";
+      if (isDark) {
+        document.documentElement.style.colorScheme = "light";
+        document.body.style.background = "#ffffff";
+        document.body.style.color = "#1a1a1a";
+      } else {
+        document.documentElement.style.colorScheme = "dark";
+      }
+    }
+  </script>
+</body>
+</html>
