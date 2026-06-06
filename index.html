@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-  <!-- Chart.js CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.min.js"></script>
+  <!-- Chart.js CDN (jsDelivr - plus fiable) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <style>
     /* ─────────────────────────────────────────────────────────────────── */
@@ -1341,11 +1341,23 @@
     /* INIT */
     /* ─────────────────────────────────────────────────────────────────── */
     window.addEventListener("DOMContentLoaded", () => {
-      renderKPIGrid();
-      renderTable();
-      renderPredictions();
-      animateCounters();
-      renderCharts();
+      // S'assurer que Chart.js est chargé
+      if (typeof Chart === 'undefined') {
+        console.warn('Chart.js pas encore chargé, attente...');
+        setTimeout(() => {
+          renderKPIGrid();
+          renderTable();
+          renderPredictions();
+          animateCounters();
+          renderCharts();
+        }, 500);
+      } else {
+        renderKPIGrid();
+        renderTable();
+        renderPredictions();
+        animateCounters();
+        renderCharts();
+      }
     });
 
     /* ─────────────────────────────────────────────────────────────────── */
@@ -1479,9 +1491,17 @@
     let chartSprints, chartDonut, chartBudget;
 
     function renderCharts() {
-      // Sprint Chart
-      const ctxSprints = document.getElementById("chartSprints").getContext("2d");
-      chartSprints = new Chart(ctxSprints, {
+      // Vérifier que Chart.js est chargé
+      if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded. Retrying in 1s...');
+        setTimeout(renderCharts, 1000);
+        return;
+      }
+
+      try {
+        // Sprint Chart
+        const ctxSprints = document.getElementById("chartSprints").getContext("2d");
+        chartSprints = new Chart(ctxSprints, {
         type: "line",
         data: {
           labels: SPRINT_DATA.labels,
@@ -1613,6 +1633,9 @@
           }
         }
       });
+      } catch (error) {
+        console.error('Erreur lors du rendu des graphiques:', error);
+      }
     }
 
     /* ─────────────────────────────────────────────────────────────────── */
